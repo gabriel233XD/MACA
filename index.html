@@ -32,7 +32,7 @@
     }
 
     .container {
-      max-width: 1000px;
+      max-width: 900px;
       margin: 0 auto;
     }
 
@@ -56,7 +56,7 @@
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 1.5rem;
       margin-bottom: 2rem;
     }
@@ -78,16 +78,16 @@
     }
 
     .card .value {
-      font-size: 2.2rem;
+      font-size: 2.5rem;
       font-weight: 700;
       color: var(--text);
     }
 
     .card .unit {
-      font-size: 1rem;
+      font-size: 1.1rem;
       color: var(--text-muted);
       font-weight: 400;
-      margin-left: 0.3rem;
+      margin-left: 0.4rem;
     }
 
     .status-text {
@@ -117,23 +117,18 @@
 
     <div class="grid">
       <div class="card">
-        <h3>Densidad de Polvo</h3>
+        <h3>Densidad de Partículas</h3>
         <div class="value"><span id="val-dust">--</span><span class="unit">µg/m³</span></div>
       </div>
 
       <div class="card">
-        <h3>Voltaje del Sensor</h3>
-        <div class="value"><span id="val-volt">--</span><span class="unit">V</span></div>
-      </div>
-
-      <div class="card">
-        <h3>Calidad del Aire</h3>
+        <h3>Estado del Aire</h3>
         <div class="value status-text" id="val-status">--</div>
       </div>
     </div>
 
     <div class="chart-container">
-      <h3 style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.9rem; text-transform: uppercase;">Historial de Partículas Recientes</h3>
+      <h3 style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.9rem; text-transform: uppercase;">Historial en Tiempo Real</h3>
       <canvas id="dustChart" height="90"></canvas>
     </div>
   </div>
@@ -141,7 +136,6 @@
   <script>
     const FIREBASE_URL = "https://esp32-f0a2a-default-rtdb.firebaseio.com/lecturas_aire.json";
 
-    // Inicializar Gráfica con Chart.js
     const ctx = document.getElementById('dustChart').getContext('2d');
     const chart = new Chart(ctx, {
       type: 'line',
@@ -173,26 +167,20 @@
         const data = await response.json();
         if (!data) return;
 
-        // Extraer las claves autogeneradas por el HTTP POST
         const keys = Object.keys(data);
         if (keys.length === 0) return;
 
-        // Obtener el último dato registrado
         const lastKey = keys[keys.length - 1];
         const lastReading = data[lastKey];
 
-        // 1. Actualizar Tarjetas
         const dust = parseFloat(lastReading.polvo_ugm3 || 0);
-        const volt = parseFloat(lastReading.voltaje_v || 0);
         const status = lastReading.estado || "Desconocido";
 
         document.getElementById('val-dust').innerText = dust.toFixed(1);
-        document.getElementById('val-volt').innerText = volt.toFixed(2);
         
         const statusEl = document.getElementById('val-status');
         statusEl.innerText = status;
 
-        // Colores según el estado
         if (dust < 35) {
           statusEl.style.color = "var(--success)";
         } else if (dust < 100) {
@@ -201,9 +189,8 @@
           statusEl.style.color = "var(--danger)";
         }
 
-        // 2. Actualizar Gráfica con los últimos 10 puntos
         const ultimasClaves = keys.slice(-10);
-        chart.data.labels = ultimasClaves.map((_, index) => `Punto ${index + 1}`);
+        chart.data.labels = ultimasClaves.map((_, index) => `Dato ${index + 1}`);
         chart.data.datasets[0].data = ultimasClaves.map(k => data[k].polvo_ugm3);
         chart.update();
 
@@ -212,7 +199,6 @@
       }
     }
 
-    // Consultar cada 3 segundos
     setInterval(actualizarDatos, 3000);
     actualizarDatos();
   </script>
